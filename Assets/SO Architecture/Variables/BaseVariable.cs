@@ -9,6 +9,7 @@ namespace ScriptableObjectArchitecture
         public abstract bool ReadOnly { get; }
         public abstract System.Type Type { get; }
         public abstract object BaseValue { get; set; }
+        public abstract void Wash();
     }
     public abstract class BaseVariable<T> : BaseVariable
     {
@@ -20,21 +21,22 @@ namespace ScriptableObjectArchitecture
             }
             set
             {
-                _value = SetValue(value);
+                _value = SetValue( value );
                 Raise();
             }
         }
+
         public virtual T MinClampValue
         {
             get
             {
-                if(Clampable)
+                if ( Clampable )
                 {
                     return _minClampedValue;
                 }
                 else
                 {
-                    return default(T);
+                    return default( T );
                 }
             }
         }
@@ -42,13 +44,13 @@ namespace ScriptableObjectArchitecture
         {
             get
             {
-                if(Clampable)
+                if ( Clampable )
                 {
                     return _maxClampedValue;
                 }
                 else
                 {
-                    return default(T);
+                    return default( T );
                 }
             }
         }
@@ -56,7 +58,7 @@ namespace ScriptableObjectArchitecture
         public override bool Clampable { get { return false; } }
         public override bool ReadOnly { get { return _readOnly; } }
         public override bool IsClamped { get { return _isClamped; } }
-        public override System.Type Type { get { return typeof(T); } }
+        public override System.Type Type { get { return typeof( T ); } }
         public override object BaseValue
         {
             get
@@ -65,13 +67,28 @@ namespace ScriptableObjectArchitecture
             }
             set
             {
-                _value = SetValue((T)value);
+                _value = SetValue( (T)value );
+                Raise();
+            }
+        }
+
+        public T DefaultValue
+        {
+            get
+            {
+                return _defaultValue;
+            }
+            set
+            {
+                _defaultValue = SetValue( (T)value );
                 Raise();
             }
         }
 
         [SerializeField]
-        protected T _value = default(T);
+        public T _value = default(T);
+        [SerializeField]
+        public T _defaultValue = default(T);
         [SerializeField]
         private bool _readOnly = false;
         [SerializeField]
@@ -82,7 +99,12 @@ namespace ScriptableObjectArchitecture
         protected T _minClampedValue = default(T);
         [SerializeField]
         protected T _maxClampedValue = default(T);
-        
+
+        public override void Wash()
+        {
+            _value = _defaultValue;
+        }
+
         public virtual T SetValue(T value)
         {
             if (_readOnly)
@@ -97,6 +119,7 @@ namespace ScriptableObjectArchitecture
 
             return value;
         }
+
         public virtual T SetValue(BaseVariable<T> value)
         {
             if (_readOnly)
@@ -111,10 +134,12 @@ namespace ScriptableObjectArchitecture
 
             return value.Value;
         }
+
         protected virtual T ClampValue(T value)
         {
             return value;
         }
+
         private void RaiseReadonlyWarning()
         {
             if (!_readOnly || !_raiseWarning)
@@ -122,10 +147,12 @@ namespace ScriptableObjectArchitecture
 
             Debug.LogWarning("Tried to set value on " + name + ", but value is readonly!", this);
         }
+        
         public override string ToString()
         {
             return _value == null ? "null" : _value.ToString();
         }
+
         public static implicit operator T(BaseVariable<T> variable)
         {
             return variable.Value;
